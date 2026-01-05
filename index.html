@@ -1,1113 +1,1673 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Latency Master - GLM Model Performance Tester</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
     <style>
-        * {
-            font-family: 'Inter', sans-serif;
-        }
-        
-        body {
-            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #0f0f23 100%);
-            min-height: 100vh;
-        }
-        
-        .glass-card {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-        
-        .gradient-border {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 2px;
-            border-radius: 16px;
-        }
-        
-        .gradient-border-inner {
-            background: #1a1a3e;
-            border-radius: 14px;
-        }
-        
-        .glow-effect {
-            box-shadow: 0 0 40px rgba(102, 126, 234, 0.3);
-        }
-        
-        .pulse-animation {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.5;
-            }
-        }
-        
-        .slide-in {
-            animation: slideIn 0.5s ease-out;
-        }
-        
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .fade-in {
-            animation: fadeIn 0.3s ease-out;
-        }
-        
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
-        }
-        
-        .scale-in {
-            animation: scaleIn 0.3s ease-out;
-        }
-        
-        @keyframes scaleIn {
-            from {
-                opacity: 0;
-                transform: scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-        
-        .history-item:hover {
-            transform: translateX(8px);
-            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.2);
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            transition: all 0.3s ease;
-        }
-        
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
-        }
-        
-        .btn-primary:active {
-            transform: translateY(0);
-        }
-        
-        .input-field {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-        }
+      * {
+        font-family: "Inter", sans-serif;
+      }
 
-        .input-field:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 20px rgba(102, 126, 234, 0.2);
-            outline: none;
-        }
+      body {
+        background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #0f0f23 100%);
+        min-height: 100vh;
+      }
 
-        .select-wrapper {
-            position: relative;
-        }
+      .glass-card {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
 
-        .select-wrapper::after {
-            content: '';
-            position: absolute;
-            right: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 0;
-            height: 0;
-            border-left: 6px solid transparent;
-            border-right: 6px solid transparent;
-            border-top: 6px solid rgba(255, 255, 255, 0.6);
-            pointer-events: none;
-            transition: border-top-color 0.3s ease;
-        }
+      .gradient-border {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 2px;
+        border-radius: 16px;
+      }
 
-        .select-wrapper:hover::after {
-            border-top-color: rgba(255, 255, 255, 0.9);
-        }
+      .gradient-border-inner {
+        background: #1a1a3e;
+        border-radius: 14px;
+      }
 
-        #modelSelect {
-            appearance: none;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            padding-right: 40px;
-        }
+      .glow-effect {
+        box-shadow: 0 0 40px rgba(102, 126, 234, 0.3);
+      }
 
-        .toggle-switch {
-            position: relative;
-            width: 52px;
-            height: 28px;
-        }
+      .pulse-animation {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
 
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
         }
+        50% {
+          opacity: 0.5;
+        }
+      }
 
-        .toggle-slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.3s ease;
-            border-radius: 28px;
-        }
+      .slide-in {
+        animation: slideIn 0.5s ease-out;
+      }
 
-        .toggle-slider:before {
-            position: absolute;
-            content: "";
-            height: 20px;
-            width: 20px;
-            left: 4px;
-            bottom: 3px;
-            background: white;
-            transition: all 0.3s ease;
-            border-radius: 50%;
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
         }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
 
-        input:checked + .toggle-slider {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-color: transparent;
-        }
+      .fade-in {
+        animation: fadeIn 0.3s ease-out;
+      }
 
-        input:checked + .toggle-slider:before {
-            transform: translateX(24px);
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
         }
+        to {
+          opacity: 1;
+        }
+      }
 
-        .toggle-slider:hover {
-            border-color: rgba(102, 126, 234, 0.5);
-        }
+      .scale-in {
+        animation: scaleIn 0.3s ease-out;
+      }
 
-        input:checked + .toggle-slider:hover {
-            box-shadow: 0 0 15px rgba(102, 126, 234, 0.4);
+      @keyframes scaleIn {
+        from {
+          opacity: 0;
+          transform: scale(0.95);
         }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
 
-        .process-timeline {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
+      .history-item:hover {
+        transform: translateX(8px);
+        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.2);
+      }
 
-        .process-step {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            transition: all 0.3s ease;
-        }
+      .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        transition: all 0.3s ease;
+      }
 
-        .process-step.pending {
-            opacity: 0.4;
-        }
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+      }
 
-        .process-step.active {
-            background: rgba(102, 126, 234, 0.1);
-            border-color: rgba(102, 126, 234, 0.3);
-            animation: pulse-step 1.5s ease-in-out infinite;
-        }
+      .btn-primary:active {
+        transform: translateY(0);
+      }
 
-        .process-step.completed {
-            background: rgba(16, 185, 129, 0.1);
-            border-color: rgba(16, 185, 129, 0.3);
-        }
+      .input-field {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
+      }
 
-        .process-step.failed {
-            background: rgba(239, 68, 68, 0.1);
-            border-color: rgba(239, 68, 68, 0.3);
-        }
+      .input-field:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 20px rgba(102, 126, 234, 0.2);
+        outline: none;
+      }
 
-        @keyframes pulse-step {
-            0%, 100% {
-                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.4);
-            }
-            50% {
-                box-shadow: 0 0 0 8px rgba(102, 126, 234, 0);
-            }
-        }
+      .select-wrapper {
+        position: relative;
+      }
 
-        .step-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            transition: all 0.3s ease;
-        }
+      .select-wrapper::after {
+        content: "";
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 0;
+        height: 0;
+        border-left: 6px solid transparent;
+        border-right: 6px solid transparent;
+        border-top: 6px solid rgba(255, 255, 255, 0.6);
+        pointer-events: none;
+        transition: border-top-color 0.3s ease;
+      }
 
-        .process-step.pending .step-icon {
-            background: rgba(255, 255, 255, 0.1);
-        }
+      .select-wrapper:hover::after {
+        border-top-color: rgba(255, 255, 255, 0.9);
+      }
 
-        .process-step.active .step-icon {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            animation: spin-icon 2s linear infinite;
-        }
+      #modelSelect {
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        padding-right: 40px;
+      }
 
-        .process-step.completed .step-icon {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        }
+      .toggle-switch {
+        position: relative;
+        width: 52px;
+        height: 28px;
+      }
 
-        .process-step.failed .step-icon {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        }
+      .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
 
-        @keyframes spin-icon {
-            from {
-                transform: rotate(0deg);
-            }
-            to {
-                transform: rotate(360deg);
-            }
-        }
+      .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
+        border-radius: 28px;
+      }
 
-        .step-content {
-            flex: 1;
-        }
+      .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 20px;
+        width: 20px;
+        left: 4px;
+        bottom: 3px;
+        background: white;
+        transition: all 0.3s ease;
+        border-radius: 50%;
+      }
 
-        .step-title {
-            font-size: 14px;
-            font-weight: 500;
-            margin-bottom: 2px;
-        }
+      input:checked + .toggle-slider {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-color: transparent;
+      }
 
-        .step-time {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.5);
-        }
+      input:checked + .toggle-slider:before {
+        transform: translateX(24px);
+      }
 
-        .step-status {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
+      .toggle-slider:hover {
+        border-color: rgba(102, 126, 234, 0.5);
+      }
 
-        .process-step.pending .step-status {
-            background: rgba(255, 255, 255, 0.2);
-        }
+      input:checked + .toggle-slider:hover {
+        box-shadow: 0 0 15px rgba(102, 126, 234, 0.4);
+      }
 
-        .process-step.active .step-status {
-            background: #667eea;
-            animation: blink 1s ease-in-out infinite;
-        }
+      .process-timeline {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
 
-        .process-step.completed .step-status {
-            background: #10b981;
-        }
+      .process-step {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        transition: all 0.3s ease;
+      }
 
-        .process-step.failed .step-status {
-            background: #ef4444;
-        }
+      .process-step.pending {
+        opacity: 0.4;
+      }
 
-        @keyframes blink {
-            0%, 100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.3;
-            }
+      .process-step.active {
+        background: rgba(102, 126, 234, 0.1);
+        border-color: rgba(102, 126, 234, 0.3);
+        animation: pulse-step 1.5s ease-in-out infinite;
+      }
+
+      .process-step.completed {
+        background: rgba(16, 185, 129, 0.1);
+        border-color: rgba(16, 185, 129, 0.3);
+      }
+
+      .process-step.failed {
+        background: rgba(239, 68, 68, 0.1);
+        border-color: rgba(239, 68, 68, 0.3);
+      }
+
+      @keyframes pulse-step {
+        0%,
+        100% {
+          box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.4);
         }
-        
-        .latency-badge {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        50% {
+          box-shadow: 0 0 0 8px rgba(102, 126, 234, 0);
         }
-        
-        .latency-badge.warning {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      }
+
+      .step-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: all 0.3s ease;
+      }
+
+      .process-step.pending .step-icon {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .process-step.active .step-icon {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        animation: spin-icon 2s linear infinite;
+      }
+
+      .process-step.completed .step-icon {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      }
+
+      .process-step.failed .step-icon {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      }
+
+      @keyframes spin-icon {
+        from {
+          transform: rotate(0deg);
         }
-        
-        .latency-badge.danger {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        to {
+          transform: rotate(360deg);
         }
-        
-        .scrollbar-thin::-webkit-scrollbar {
-            width: 6px;
+      }
+
+      .step-content {
+        flex: 1;
+      }
+
+      .step-title {
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 2px;
+      }
+
+      .step-time {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.5);
+      }
+
+      .step-status {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+
+      .process-step.pending .step-status {
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      .process-step.active .step-status {
+        background: #667eea;
+        animation: blink 1s ease-in-out infinite;
+      }
+
+      .process-step.completed .step-status {
+        background: #10b981;
+      }
+
+      .process-step.failed .step-status {
+        background: #ef4444;
+      }
+
+      @keyframes blink {
+        0%,
+        100% {
+          opacity: 1;
         }
-        
-        .scrollbar-thin::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 3px;
+        50% {
+          opacity: 0.3;
         }
-        
-        .scrollbar-thin::-webkit-scrollbar-thumb {
-            background: rgba(102, 126, 234, 0.5);
-            border-radius: 3px;
+      }
+
+      .latency-badge {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      }
+
+      .latency-badge.warning {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      }
+
+      .latency-badge.danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      }
+
+      .scrollbar-thin::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .scrollbar-thin::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 3px;
+      }
+
+      .scrollbar-thin::-webkit-scrollbar-thumb {
+        background: rgba(102, 126, 234, 0.5);
+        border-radius: 3px;
+      }
+
+      .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+        background: rgba(102, 126, 234, 0.7);
+      }
+
+      .modal-backdrop {
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(8px);
+      }
+
+      .spinner {
+        border: 3px solid rgba(255, 255, 255, 0.1);
+        border-top: 3px solid #667eea;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
         }
-        
-        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-            background: rgba(102, 126, 234, 0.7);
+        100% {
+          transform: rotate(360deg);
         }
-        
-        .modal-backdrop {
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(8px);
-        }
-        
-        .spinner {
-            border: 3px solid rgba(255, 255, 255, 0.1);
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-        
-        .stat-card {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-            border: 1px solid rgba(102, 126, 234, 0.2);
-        }
-        
-        .glow-text {
-            text-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
-        }
+      }
+
+      .stat-card {
+        background: linear-gradient(
+          135deg,
+          rgba(102, 126, 234, 0.1) 0%,
+          rgba(118, 75, 162, 0.1) 100%
+        );
+        border: 1px solid rgba(102, 126, 234, 0.2);
+      }
+
+      .glow-text {
+        text-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+      }
+
+      .endpoint-btn {
+        color: rgba(255, 255, 255, 0.5);
+        background: transparent;
+      }
+
+      .endpoint-btn:hover {
+        color: rgba(255, 255, 255, 0.8);
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .endpoint-btn.active {
+        color: white;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+      }
+
+      .endpoint-btn.active.anthropic {
+        background: linear-gradient(135deg, #d97706 0%, #dc2626 100%);
+        box-shadow: 0 4px 15px rgba(217, 119, 6, 0.3);
+      }
     </style>
-</head>
-<body class="text-white">
+  </head>
+  <body class="text-white">
     <div class="min-h-screen p-4 md:p-8">
-        <!-- Header -->
-        <header class="max-w-7xl mx-auto mb-8 slide-in">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center glow-effect">
-                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <h1 class="text-2xl md:text-3xl font-bold glow-text">Latency Master</h1>
-                        <p class="text-gray-400 text-sm">GLM Model Performance Tester</p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-4">
-                    <div id="userAvatar" class="hidden md:flex items-center gap-3 px-4 py-2 rounded-full glass-card">
-                        <div id="avatarInitial" class="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center text-sm font-bold">
-                            U
-                        </div>
-                        <div class="flex flex-col">
-                            <span id="userName" class="text-sm font-medium text-white">User</span>
-                            <span id="userId" class="text-xs text-gray-400">ID: ---</span>
-                        </div>
-                    </div>
-                    <button onclick="clearHistory()" class="px-4 py-2 rounded-lg glass-card text-gray-300 hover:text-white hover:border-purple-500/50 transition-all text-sm">
-                        Clear History
-                    </button>
-                    <div class="hidden md:flex items-center gap-2 px-4 py-2 rounded-full glass-card">
-                        <div class="w-2 h-2 rounded-full bg-green-500 pulse-animation"></div>
-                        <span class="text-sm text-gray-300">Ready</span>
-                    </div>
-                </div>
+      <!-- Header -->
+      <header class="max-w-7xl mx-auto mb-8 slide-in">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div
+              class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center glow-effect"
+            >
+              <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M13 10V3L4 14h7v7l9-11h-7z"
+                />
+              </svg>
             </div>
-        </header>
-
-        <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <!-- Left Panel - Test Configuration -->
-            <div class="space-y-6">
-                <!-- API Configuration Card -->
-                <div class="glass-card rounded-2xl p-6 slide-in" style="animation-delay: 0.1s;">
-                    <div class="flex items-center gap-3 mb-6">
-                        <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
-                            </svg>
-                        </div>
-                        <h2 class="text-xl font-semibold">API Configuration</h2>
-                    </div>
-                    
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">API Key</label>
-                            <div class="relative">
-                                <input 
-                                    type="password" 
-                                    id="apiKey" 
-                                    placeholder="Enter your Z.AI API key"
-                                    class="input-field w-full px-4 py-3 rounded-xl text-white placeholder-gray-500"
-                                >
-                                <button onclick="toggleApiKeyVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors">
-                                    <svg id="eyeIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Select Model</label>
-                            <div class="select-wrapper">
-                                <select id="modelSelect" class="input-field w-full px-4 py-3 rounded-xl text-white cursor-pointer">
-                                    <option value="">Choose a model...</option>
-                                    <option value="GLM-4.6">GLM-4.6 (Concurrency: 3)</option>
-                                    <option value="GLM-4.6V-FlashX">GLM-4.6V-FlashX (Concurrency: 3)</option>
-                                    <option value="GLM-4.7">GLM-4.7 (Concurrency: 5)</option>
-                                    <option value="GLM-4.5">GLM-4.5 (Concurrency: 10)</option>
-                                    <option value="GLM-4.6V">GLM-4.6V (Concurrency: 10)</option>
-                                    <option value="GLM-4-Plus">GLM-4-Plus (Concurrency: 20)</option>
-                                    <option value="GLM-4.5V">GLM-4.5V (Concurrency: 10)</option>
-                                    <option value="GLM-4.6V-Flash">GLM-4.6V-Flash (Concurrency: 3)</option>
-                                    <option value="AutoGLM-Phone-Multilingual">AutoGLM-Phone-Multilingual (Concurrency: 5)</option>
-                                    <option value="GLM-4.5-Air">GLM-4.5-Air (Concurrency: 5)</option>
-                                    <option value="GLM-4.5-AirX">GLM-4.5-AirX (Concurrency: 5)</option>
-                                    <option value="GLM-4.5-Flash">GLM-4.5-Flash (Concurrency: 2)</option>
-                                    <option value="GLM-4-32B-0414-128K">GLM-4-32B-0414-128K (Concurrency: 15)</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Prompt Input Card -->
-                <div class="glass-card rounded-2xl p-6 slide-in" style="animation-delay: 0.2s;">
-                    <div class="flex items-center gap-3 mb-6">
-                        <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                            </svg>
-                        </div>
-                        <h2 class="text-xl font-semibold">Test Prompt</h2>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-2">Enter your prompt</label>
-                        <textarea 
-                            id="promptInput" 
-                            rows="6"
-                            placeholder="Enter the prompt you want to test..."
-                            class="input-field w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 resize-none scrollbar-thin"
-                        ></textarea>
-                        <div class="flex justify-between items-center mt-2">
-                            <span id="charCount" class="text-xs text-gray-500">0 characters</span>
-                            <button onclick="useSamplePrompt()" class="text-xs text-purple-400 hover:text-purple-300 transition-colors">
-                                Use sample prompt
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Test Button -->
-                <button 
-                    id="testBtn"
-                    onclick="runTest()" 
-                    class="btn-primary w-full py-4 rounded-xl font-semibold text-lg flex items-center justify-center gap-3 slide-in"
-                    style="animation-delay: 0.3s;"
-                >
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    Run Latency Test
-                </button>
-
-                <!-- Live Stats -->
-                <div id="liveStats" class="hidden glass-card rounded-2xl p-6 slide-in">
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                            </svg>
-                        </div>
-                        <h2 class="text-xl font-semibold">Live Results</h2>
-                    </div>
-                    
-                    <!-- Process Timeline - Prominent at top -->
-                    <div class="mb-6">
-                        <h3 class="text-sm font-medium text-gray-300 mb-3">Process Timeline</h3>
-                        <div id="processTimeline" class="process-timeline">
-                            <div id="step-dns" class="process-step pending">
-                                <div class="step-icon">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
-                                    </svg>
-                                </div>
-                                <div class="step-content">
-                                    <p class="step-title">DNS Resolution</p>
-                                    <p id="dns-time" class="step-time">--</p>
-                                </div>
-                                <div class="step-status"></div>
-                            </div>
-                            <div id="step-tls" class="process-step pending">
-                                <div class="step-icon">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                                    </svg>
-                                </div>
-                                <div class="step-content">
-                                    <p class="step-title">TLS Handshake</p>
-                                    <p id="tls-time" class="step-time">--</p>
-                                </div>
-                                <div class="step-status"></div>
-                            </div>
-                            <div id="step-send" class="process-step pending">
-                                <div class="step-icon">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
-                                    </svg>
-                                </div>
-                                <div class="step-content">
-                                    <p class="step-title">Sending Request</p>
-                                    <p id="send-time" class="step-time">--</p>
-                                </div>
-                                <div class="step-status"></div>
-                            </div>
-                            <div id="step-process" class="process-step pending">
-                                <div class="step-icon">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                                    </svg>
-                                </div>
-                                <div class="step-content">
-                                    <p class="step-title">Processing</p>
-                                    <p id="process-time" class="step-time">--</p>
-                                </div>
-                                <div class="step-status"></div>
-                            </div>
-                            <div id="step-receive" class="process-step pending">
-                                <div class="step-icon">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                                    </svg>
-                                </div>
-                                <div class="step-content">
-                                    <p class="step-title">Receiving Response</p>
-                                    <p id="receive-time" class="step-time">--</p>
-                                </div>
-                                <div class="step-status"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Compact Stats Grid -->
-                    <div class="grid grid-cols-2 gap-3 mb-4">
-                        <div class="stat-card rounded-xl p-3">
-                            <p class="text-xs text-gray-400 mb-1">Latency</p>
-                            <p id="latencyValue" class="text-xl font-bold text-green-400">--</p>
-                        </div>
-                        <div class="stat-card rounded-xl p-3">
-                            <p class="text-xs text-gray-400 mb-1">Status</p>
-                            <p id="statusValue" class="text-xl font-bold text-blue-400">--</p>
-                        </div>
-                        <div class="stat-card rounded-xl p-3">
-                            <p class="text-xs text-gray-400 mb-1">Tokens</p>
-                            <p id="tokensValue" class="text-xl font-bold text-cyan-400">--</p>
-                        </div>
-                        <div class="stat-card rounded-xl p-3">
-                            <p class="text-xs text-gray-400 mb-1">TPS</p>
-                            <p id="tpsValue" class="text-xl font-bold text-amber-400">--</p>
-                        </div>
-                    </div>
-
-                    <!-- Model Response - Collapsible -->
-                    <div class="border-t border-white/10 pt-4">
-                        <button onclick="toggleResponse()" class="flex items-center justify-between w-full text-left">
-                            <h3 class="text-sm font-medium text-gray-300">Model Response</h3>
-                            <svg id="responseToggleIcon" class="w-4 h-4 text-gray-400 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                            </svg>
-                        </button>
-                        <div id="liveResponseContainer" class="mt-3 hidden">
-                            <div id="liveResponse" class="glass-card rounded-xl p-4 text-sm text-gray-300 whitespace-pre-wrap max-h-64 overflow-y-auto scrollbar-thin">
-                                <p class="text-gray-500 italic">Response will appear here after test completes...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div>
+              <h1 class="text-2xl md:text-3xl font-bold glow-text">Latency Master</h1>
+              <p class="text-gray-400 text-sm">GLM Model Performance Tester</p>
             </div>
-
-            <!-- Right Panel - History -->
-            <div class="glass-card rounded-2xl p-6 slide-in" style="animation-delay: 0.4s;">
-                <div class="flex items-center justify-between mb-6">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                        </div>
-                        <h2 class="text-xl font-semibold">Test History</h2>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <select id="userFilter" onchange="filterHistory()" class="px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-sm text-gray-300 focus:outline-none focus:border-purple-500/50">
-                            <option value="all">All Users</option>
-                        </select>
-                        <span id="historyCount" class="px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-sm font-medium">0 tests</span>
-                    </div>
-                </div>
-                
-                <div id="historyContainer" class="space-y-3 max-h-[600px] overflow-y-auto scrollbar-thin">
-                    <div id="emptyHistory" class="text-center py-12">
-                        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-800/50 flex items-center justify-center">
-                            <svg class="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                            </svg>
-                        </div>
-                        <p class="text-gray-500">No tests yet</p>
-                        <p class="text-gray-600 text-sm mt-1">Run your first test to see results here</p>
-                    </div>
-                </div>
+          </div>
+          <div class="flex items-center gap-4">
+            <div
+              id="userAvatar"
+              class="hidden md:flex items-center gap-3 px-4 py-2 rounded-full glass-card"
+            >
+              <div
+                id="avatarInitial"
+                class="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center text-sm font-bold"
+              >
+                U
+              </div>
+              <div class="flex flex-col">
+                <span id="userName" class="text-sm font-medium text-white">User</span>
+                <span id="userId" class="text-xs text-gray-400">ID: ---</span>
+              </div>
             </div>
+            <button
+              onclick="clearHistory()"
+              class="px-4 py-2 rounded-lg glass-card text-gray-300 hover:text-white hover:border-purple-500/50 transition-all text-sm"
+            >
+              Clear History
+            </button>
+            <div class="hidden md:flex items-center gap-2 px-4 py-2 rounded-full glass-card">
+              <div class="w-2 h-2 rounded-full bg-green-500 pulse-animation"></div>
+              <span class="text-sm text-gray-300">Ready</span>
+            </div>
+          </div>
         </div>
+      </header>
+
+      <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Left Panel - Test Configuration -->
+        <div class="space-y-6">
+          <!-- API Configuration Card -->
+          <div class="glass-card rounded-2xl p-6 slide-in" style="animation-delay: 0.1s">
+            <div class="flex items-center gap-3 mb-6">
+              <div
+                class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
+                  />
+                </svg>
+              </div>
+              <h2 class="text-xl font-semibold">API Configuration</h2>
+            </div>
+
+            <div class="space-y-4">
+              <!-- API Endpoint Toggle -->
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-3">API Endpoint</label>
+                <div
+                  class="flex items-center gap-2 p-1 rounded-xl bg-white/5 border border-white/10"
+                >
+                  <button
+                    id="btnOpenAI"
+                    onclick="setEndpoint('openai')"
+                    class="endpoint-btn flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-300 flex items-center justify-center gap-2 active"
+                  >
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                      <path
+                        d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.5963 3.8558L13.1038 8.364l2.0201-1.1638a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"
+                      />
+                    </svg>
+                    OpenAI
+                  </button>
+                  <button
+                    id="btnAnthropic"
+                    onclick="setEndpoint('anthropic')"
+                    class="endpoint-btn flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-300 flex items-center justify-center gap-2"
+                  >
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                      <path
+                        d="M17.304 3.541h-3.672l6.696 16.918h3.672l-6.696-16.918zm-10.608 0l-6.696 16.918h3.78l1.344-3.492h6.468l1.344 3.492h3.78l-6.696-16.918h-3.324zm-.372 10.362l2.124-5.52 2.124 5.52h-4.248z"
+                      />
+                    </svg>
+                    Anthropic
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">API Key</label>
+                <div class="relative">
+                  <input
+                    type="password"
+                    id="apiKey"
+                    placeholder="Enter your Z.AI API key"
+                    class="input-field w-full px-4 py-3 rounded-xl text-white placeholder-gray-500"
+                  />
+                  <button
+                    onclick="toggleApiKeyVisibility()"
+                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                  >
+                    <svg
+                      id="eyeIcon"
+                      class="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Select Model</label>
+                <div class="select-wrapper">
+                  <select
+                    id="modelSelect"
+                    class="input-field w-full px-4 py-3 rounded-xl text-white cursor-pointer"
+                  >
+                    <!-- OpenAI Models -->
+                    <optgroup id="openaiModels" label="GLM Models">
+                      <option value="">Choose a model...</option>
+                      <option value="GLM-4.6">GLM-4.6 (Concurrency: 3)</option>
+                      <option value="GLM-4.6V-FlashX">GLM-4.6V-FlashX (Concurrency: 3)</option>
+                      <option value="GLM-4.7">GLM-4.7 (Concurrency: 5)</option>
+                      <option value="GLM-4.5">GLM-4.5 (Concurrency: 10)</option>
+                      <option value="GLM-4.6V">GLM-4.6V (Concurrency: 10)</option>
+                      <option value="GLM-4-Plus">GLM-4-Plus (Concurrency: 20)</option>
+                      <option value="GLM-4.5V">GLM-4.5V (Concurrency: 10)</option>
+                      <option value="GLM-4.6V-Flash">GLM-4.6V-Flash (Concurrency: 3)</option>
+                      <option value="AutoGLM-Phone-Multilingual">
+                        AutoGLM-Phone-Multilingual (Concurrency: 5)
+                      </option>
+                      <option value="GLM-4.5-Air">GLM-4.5-Air (Concurrency: 5)</option>
+                      <option value="GLM-4.5-AirX">GLM-4.5-AirX (Concurrency: 5)</option>
+                      <option value="GLM-4.5-Flash">GLM-4.5-Flash (Concurrency: 2)</option>
+                      <option value="GLM-4-32B-0414-128K">
+                        GLM-4-32B-0414-128K (Concurrency: 15)
+                      </option>
+                    </optgroup>
+                    <!-- Anthropic Models (hidden by default) -->
+                    <optgroup id="anthropicModels" label="Claude Models" style="display: none">
+                      <option value="">Choose a model...</option>
+                      <option value="claude-sonnet-4-20250514">Claude Sonnet 4 (Latest)</option>
+                      <option value="claude-3-7-sonnet-20250219">Claude 3.7 Sonnet</option>
+                      <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</option>
+                      <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku</option>
+                      <option value="claude-3-opus-20240229">Claude 3 Opus</option>
+                      <option value="claude-3-sonnet-20240229">Claude 3 Sonnet</option>
+                      <option value="claude-3-haiku-20240307">Claude 3 Haiku</option>
+                    </optgroup>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Thinking Toggle (Both endpoints) -->
+              <div id="thinkingToggleContainer">
+                <div
+                  class="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20"
+                >
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <p class="text-sm font-medium text-white">Extended Thinking</p>
+                      <p class="text-xs text-gray-400">
+                        Enable step-by-step reasoning (GLM/Claude)
+                      </p>
+                    </div>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="thinkingToggle" onchange="toggleThinking()" />
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div id="thinkingBudgetContainer" class="hidden mt-3">
+                  <label class="block text-sm font-medium text-gray-300 mb-2"
+                    >Thinking Budget (tokens)</label
+                  >
+                  <input
+                    type="number"
+                    id="thinkingBudget"
+                    value="10000"
+                    min="1024"
+                    max="100000"
+                    class="input-field w-full px-4 py-3 rounded-xl text-white placeholder-gray-500"
+                  />
+                  <p class="text-xs text-gray-500 mt-1">Min: 1,024 · Max: 100,000 tokens</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Prompt Input Card -->
+          <div class="glass-card rounded-2xl p-6 slide-in" style="animation-delay: 0.2s">
+            <div class="flex items-center gap-3 mb-6">
+              <div
+                class="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+              </div>
+              <h2 class="text-xl font-semibold">Test Prompt</h2>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-2">Enter your prompt</label>
+              <textarea
+                id="promptInput"
+                rows="6"
+                placeholder="Enter the prompt you want to test..."
+                class="input-field w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 resize-none scrollbar-thin"
+              ></textarea>
+              <div class="flex justify-between items-center mt-2">
+                <span id="charCount" class="text-xs text-gray-500">0 characters</span>
+                <button
+                  onclick="useSamplePrompt()"
+                  class="text-xs text-purple-400 hover:text-purple-300 transition-colors"
+                >
+                  Use sample prompt
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Test Button -->
+          <button
+            id="testBtn"
+            onclick="runTest()"
+            class="btn-primary w-full py-4 rounded-xl font-semibold text-lg flex items-center justify-center gap-3 slide-in"
+            style="animation-delay: 0.3s"
+          >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+              />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            Run Latency Test
+          </button>
+
+          <!-- Live Stats -->
+          <div id="liveStats" class="hidden glass-card rounded-2xl p-6 slide-in">
+            <div class="flex items-center gap-3 mb-4">
+              <div
+                class="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                  />
+                </svg>
+              </div>
+              <h2 class="text-xl font-semibold">Live Results</h2>
+            </div>
+
+            <!-- Process Timeline - Prominent at top -->
+            <div class="mb-6">
+              <h3 class="text-sm font-medium text-gray-300 mb-3">Process Timeline</h3>
+              <div id="processTimeline" class="process-timeline">
+                <div id="step-dns" class="process-step pending">
+                  <div class="step-icon">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
+                      />
+                    </svg>
+                  </div>
+                  <div class="step-content">
+                    <p class="step-title">DNS Resolution</p>
+                    <p id="dns-time" class="step-time">--</p>
+                  </div>
+                  <div class="step-status"></div>
+                </div>
+                <div id="step-tls" class="process-step pending">
+                  <div class="step-icon">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                      />
+                    </svg>
+                  </div>
+                  <div class="step-content">
+                    <p class="step-title">TLS Handshake</p>
+                    <p id="tls-time" class="step-time">--</p>
+                  </div>
+                  <div class="step-status"></div>
+                </div>
+                <div id="step-send" class="process-step pending">
+                  <div class="step-icon">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                      />
+                    </svg>
+                  </div>
+                  <div class="step-content">
+                    <p class="step-title">Sending Request</p>
+                    <p id="send-time" class="step-time">--</p>
+                  </div>
+                  <div class="step-status"></div>
+                </div>
+                <div id="step-process" class="process-step pending">
+                  <div class="step-icon">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                  <div class="step-content">
+                    <p class="step-title">Processing</p>
+                    <p id="process-time" class="step-time">--</p>
+                  </div>
+                  <div class="step-status"></div>
+                </div>
+                <div id="step-receive" class="process-step pending">
+                  <div class="step-icon">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                      />
+                    </svg>
+                  </div>
+                  <div class="step-content">
+                    <p class="step-title">Receiving Response</p>
+                    <p id="receive-time" class="step-time">--</p>
+                  </div>
+                  <div class="step-status"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Compact Stats Grid -->
+            <div class="grid grid-cols-3 gap-3 mb-4">
+              <div class="stat-card rounded-xl p-3">
+                <p class="text-xs text-gray-400 mb-1">Total Time</p>
+                <p id="latencyValue" class="text-xl font-bold text-green-400">--</p>
+              </div>
+              <div class="stat-card rounded-xl p-3">
+                <p class="text-xs text-gray-400 mb-1">TTFT</p>
+                <p id="ttftValue" class="text-xl font-bold text-purple-400">--</p>
+              </div>
+              <div class="stat-card rounded-xl p-3">
+                <p class="text-xs text-gray-400 mb-1">Status</p>
+                <p id="statusValue" class="text-xl font-bold text-blue-400">--</p>
+              </div>
+              <div class="stat-card rounded-xl p-3">
+                <p class="text-xs text-gray-400 mb-1">Tokens</p>
+                <p id="tokensValue" class="text-xl font-bold text-cyan-400">--</p>
+              </div>
+              <div class="stat-card rounded-xl p-3">
+                <p class="text-xs text-gray-400 mb-1">TPS</p>
+                <p id="tpsValue" class="text-xl font-bold text-amber-400">--</p>
+              </div>
+              <div class="stat-card rounded-xl p-3">
+                <p class="text-xs text-gray-400 mb-1">Stream</p>
+                <p id="streamStatus" class="text-xl font-bold text-emerald-400">--</p>
+              </div>
+            </div>
+
+            <!-- Model Response - Collapsible -->
+            <div class="border-t border-white/10 pt-4">
+              <button
+                onclick="toggleResponse()"
+                class="flex items-center justify-between w-full text-left"
+              >
+                <h3 class="text-sm font-medium text-gray-300">Model Response</h3>
+                <svg
+                  id="responseToggleIcon"
+                  class="w-4 h-4 text-gray-400 transform transition-transform"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </button>
+              <div id="liveResponseContainer" class="mt-3 hidden">
+                <div
+                  id="liveResponse"
+                  class="glass-card rounded-xl p-4 text-sm text-gray-300 whitespace-pre-wrap max-h-64 overflow-y-auto scrollbar-thin"
+                >
+                  <p class="text-gray-500 italic">
+                    Response will appear here after test completes...
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Panel - History -->
+        <div class="glass-card rounded-2xl p-6 slide-in" style="animation-delay: 0.4s">
+          <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-3">
+              <div
+                class="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+              <h2 class="text-xl font-semibold">Test History</h2>
+            </div>
+            <div class="flex items-center gap-3">
+              <select
+                id="userFilter"
+                onchange="filterHistory()"
+                class="px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-sm text-gray-300 focus:outline-none focus:border-purple-500/50"
+              >
+                <option value="all">All Users</option>
+              </select>
+              <span
+                id="historyCount"
+                class="px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-sm font-medium"
+                >0 tests</span
+              >
+            </div>
+          </div>
+
+          <div id="historyContainer" class="space-y-3 max-h-[600px] overflow-y-auto scrollbar-thin">
+            <div id="emptyHistory" class="text-center py-12">
+              <div
+                class="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-800/50 flex items-center justify-center"
+              >
+                <svg
+                  class="w-8 h-8 text-gray-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                  />
+                </svg>
+              </div>
+              <p class="text-gray-500">No tests yet</p>
+              <p class="text-gray-600 text-sm mt-1">Run your first test to see results here</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Detail Modal -->
     <div id="detailModal" class="fixed inset-0 z-50 hidden">
-        <div class="modal-backdrop absolute inset-0" onclick="closeModal()"></div>
-        <div class="relative min-h-screen flex items-center justify-center p-4">
-            <div class="glass-card rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto scrollbar-thin scale-in">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-2xl font-bold">Test Details</h3>
-                    <button onclick="closeModal()" class="p-2 rounded-lg hover:bg-white/10 transition-colors">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
-                </div>
-                
-                <div id="modalContent" class="space-y-6">
-                    <!-- Content will be injected here -->
-                </div>
-            </div>
+      <div class="modal-backdrop absolute inset-0" onclick="closeModal()"></div>
+      <div class="relative min-h-screen flex items-center justify-center p-4">
+        <div
+          class="glass-card rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto scrollbar-thin scale-in"
+        >
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-2xl font-bold">Test Details</h3>
+            <button
+              onclick="closeModal()"
+              class="p-2 rounded-lg hover:bg-white/10 transition-colors"
+            >
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+
+          <div id="modalContent" class="space-y-6">
+            <!-- Content will be injected here -->
+          </div>
         </div>
+      </div>
     </div>
 
     <script>
-        // State management
-        let testHistory = JSON.parse(localStorage.getItem('latencyTests') || '[]');
-        let currentUser = null;
-        
-        // Generate or get user ID
-        function initializeUser() {
-            let userId = localStorage.getItem('userId');
-            let userName = localStorage.getItem('userName');
-            
-            if (!userId) {
-                // Generate unique user ID
-                userId = 'user_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
-                localStorage.setItem('userId', userId);
-                
-                // Generate random user name
-                const adjectives = ['Swift', 'Bright', 'Quick', 'Smart', 'Frost', 'Storm', 'Nova', 'Flux', 'Zen', 'Echo'];
-                const nouns = ['Runner', 'Seeker', 'Coder', 'Tester', 'Master', 'Pilot', 'Ninja', 'Wizard', 'Guru', 'Hacker'];
-                userName = adjectives[Math.floor(Math.random() * adjectives.length)] + 
-                          nouns[Math.floor(Math.random() * nouns.length)];
-                localStorage.setItem('userName', userName);
-            }
-            
-            currentUser = { id: userId, name: userName };
-            
-            // Update UI
-            document.getElementById('userName').textContent = userName;
-            document.getElementById('userId').textContent = 'ID: ' + userId.slice(-8);
-            document.getElementById('avatarInitial').textContent = userName.charAt(0).toUpperCase();
-            
-            // Update filter options
-            updateUserFilter();
+      // State management
+      let testHistory = JSON.parse(localStorage.getItem("latencyTests") || "[]");
+      let currentUser = null;
+      let currentEndpoint = localStorage.getItem("apiEndpoint") || "openai";
+      let thinkingEnabled = localStorage.getItem("thinkingEnabled") === "true";
+
+      // API Endpoints
+      const API_ENDPOINTS = {
+        openai: "https://api.z.ai/api/coding/paas/v4/chat/completions",
+        anthropic: "https://api.z.ai/api/anthropic/v1/messages",
+      };
+
+      // Set API endpoint
+      function setEndpoint(endpoint) {
+        currentEndpoint = endpoint;
+        localStorage.setItem("apiEndpoint", endpoint);
+
+        const btnOpenAI = document.getElementById("btnOpenAI");
+        const btnAnthropic = document.getElementById("btnAnthropic");
+        const modelSelect = document.getElementById("modelSelect");
+
+        // Update button states
+        btnOpenAI.classList.remove("active", "anthropic");
+        btnAnthropic.classList.remove("active", "anthropic");
+
+        if (endpoint === "openai") {
+          btnOpenAI.classList.add("active");
+          // Show OpenAI/GLM models
+          modelSelect.innerHTML = `
+            <option value="">Choose a model...</option>
+            <option value="GLM-4.6">GLM-4.6 (Concurrency: 3)</option>
+            <option value="GLM-4.6V-FlashX">GLM-4.6V-FlashX (Concurrency: 3)</option>
+            <option value="GLM-4.7">GLM-4.7 (Concurrency: 5)</option>
+            <option value="GLM-4.5">GLM-4.5 (Concurrency: 10)</option>
+            <option value="GLM-4.6V">GLM-4.6V (Concurrency: 10)</option>
+            <option value="GLM-4-Plus">GLM-4-Plus (Concurrency: 20)</option>
+            <option value="GLM-4.5V">GLM-4.5V (Concurrency: 10)</option>
+            <option value="GLM-4.6V-Flash">GLM-4.6V-Flash (Concurrency: 3)</option>
+            <option value="AutoGLM-Phone-Multilingual">AutoGLM-Phone-Multilingual (Concurrency: 5)</option>
+            <option value="GLM-4.5-Air">GLM-4.5-Air (Concurrency: 5)</option>
+            <option value="GLM-4.5-AirX">GLM-4.5-AirX (Concurrency: 5)</option>
+            <option value="GLM-4.5-Flash">GLM-4.5-Flash (Concurrency: 2)</option>
+            <option value="GLM-4-32B-0414-128K">GLM-4-32B-0414-128K (Concurrency: 15)</option>
+          `;
+        } else {
+          btnAnthropic.classList.add("active", "anthropic");
+          // Show Anthropic/Claude models
+          modelSelect.innerHTML = `
+            <option value="">Choose a model...</option>
+            <option value="claude-sonnet-4-20250514">Claude Sonnet 4 (Latest)</option>
+            <option value="claude-3-7-sonnet-20250219">Claude 3.7 Sonnet</option>
+            <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</option>
+            <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku</option>
+            <option value="claude-3-opus-20240229">Claude 3 Opus</option>
+            <option value="claude-3-sonnet-20240229">Claude 3 Sonnet</option>
+            <option value="claude-3-haiku-20240307">Claude 3 Haiku</option>
+          `;
         }
-        
-        // Update user filter dropdown
-        function updateUserFilter() {
-            const filterSelect = document.getElementById('userFilter');
-            const users = new Set();
-            
-            // Add current user
-            users.add(currentUser.id);
-            
-            // Add all users from history
-            testHistory.forEach(test => {
-                if (test.userId) {
-                    users.add(test.userId);
-                }
-            });
-            
-            // Clear existing options except "All Users"
-            filterSelect.innerHTML = '<option value="all">All Users</option>';
-            
-            // Add user options
-            users.forEach(userId => {
-                const option = document.createElement('option');
-                option.value = userId;
-                option.textContent = userId === currentUser.id ? 
-                    currentUser.name + ' (You)' : 
-                    'User ' + userId.slice(-8);
-                filterSelect.appendChild(option);
-            });
+      }
+
+      // Toggle thinking mode
+      function toggleThinking() {
+        const thinkingToggle = document.getElementById("thinkingToggle");
+        const thinkingBudgetContainer = document.getElementById("thinkingBudgetContainer");
+
+        thinkingEnabled = thinkingToggle.checked;
+        localStorage.setItem("thinkingEnabled", thinkingEnabled);
+
+        if (thinkingEnabled) {
+          thinkingBudgetContainer.classList.remove("hidden");
+        } else {
+          thinkingBudgetContainer.classList.add("hidden");
         }
-        
-        // Filter history by user
-        function filterHistory() {
-            const selectedUser = document.getElementById('userFilter').value;
-            renderHistory(selectedUser);
+      }
+
+      // Generate or get user ID
+      function initializeUser() {
+        let userId = localStorage.getItem("userId");
+        let userName = localStorage.getItem("userName");
+
+        if (!userId) {
+          // Generate unique user ID
+          userId = "user_" + Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+          localStorage.setItem("userId", userId);
+
+          // Generate random user name
+          const adjectives = [
+            "Swift",
+            "Bright",
+            "Quick",
+            "Smart",
+            "Frost",
+            "Storm",
+            "Nova",
+            "Flux",
+            "Zen",
+            "Echo",
+          ];
+          const nouns = [
+            "Runner",
+            "Seeker",
+            "Coder",
+            "Tester",
+            "Master",
+            "Pilot",
+            "Ninja",
+            "Wizard",
+            "Guru",
+            "Hacker",
+          ];
+          userName =
+            adjectives[Math.floor(Math.random() * adjectives.length)] +
+            nouns[Math.floor(Math.random() * nouns.length)];
+          localStorage.setItem("userName", userName);
         }
-        
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            initializeUser();
-            renderHistory();
-            updateCharCount();
-            
-            // Load saved API key
-            const savedApiKey = localStorage.getItem('apiKey');
-            if (savedApiKey) {
-                document.getElementById('apiKey').value = savedApiKey;
-            }
-            
-            // Add event listener for character count
-            document.getElementById('promptInput').addEventListener('input', updateCharCount);
+
+        currentUser = { id: userId, name: userName };
+
+        // Update UI
+        document.getElementById("userName").textContent = userName;
+        document.getElementById("userId").textContent = "ID: " + userId.slice(-8);
+        document.getElementById("avatarInitial").textContent = userName.charAt(0).toUpperCase();
+
+        // Update filter options
+        updateUserFilter();
+      }
+
+      // Update user filter dropdown
+      function updateUserFilter() {
+        const filterSelect = document.getElementById("userFilter");
+        const users = new Set();
+
+        // Add current user
+        users.add(currentUser.id);
+
+        // Add all users from history
+        testHistory.forEach((test) => {
+          if (test.userId) {
+            users.add(test.userId);
+          }
         });
-        
-        function updateCharCount() {
-            const prompt = document.getElementById('promptInput').value;
-            document.getElementById('charCount').textContent = `${prompt.length} characters`;
+
+        // Clear existing options except "All Users"
+        filterSelect.innerHTML = '<option value="all">All Users</option>';
+
+        // Add user options
+        users.forEach((userId) => {
+          const option = document.createElement("option");
+          option.value = userId;
+          option.textContent =
+            userId === currentUser.id ? currentUser.name + " (You)" : "User " + userId.slice(-8);
+          filterSelect.appendChild(option);
+        });
+      }
+
+      // Filter history by user
+      function filterHistory() {
+        const selectedUser = document.getElementById("userFilter").value;
+        renderHistory(selectedUser);
+      }
+
+      // Initialize
+      document.addEventListener("DOMContentLoaded", () => {
+        initializeUser();
+        renderHistory();
+        updateCharCount();
+
+        // Load saved API key
+        const savedApiKey = localStorage.getItem("apiKey");
+        if (savedApiKey) {
+          document.getElementById("apiKey").value = savedApiKey;
         }
-        
-        function toggleApiKeyVisibility() {
-            const apiKeyInput = document.getElementById('apiKey');
-            const eyeIcon = document.getElementById('eyeIcon');
-            
-            if (apiKeyInput.type === 'password') {
-                apiKeyInput.type = 'text';
-                eyeIcon.innerHTML = `
+
+        // Initialize endpoint toggle
+        setEndpoint(currentEndpoint);
+
+        // Initialize thinking toggle state
+        const thinkingToggle = document.getElementById("thinkingToggle");
+        thinkingToggle.checked = thinkingEnabled;
+        if (thinkingEnabled) {
+          document.getElementById("thinkingBudgetContainer").classList.remove("hidden");
+        }
+
+        // Add event listener for character count
+        document.getElementById("promptInput").addEventListener("input", updateCharCount);
+      });
+
+      function updateCharCount() {
+        const prompt = document.getElementById("promptInput").value;
+        document.getElementById("charCount").textContent = `${prompt.length} characters`;
+      }
+
+      function toggleApiKeyVisibility() {
+        const apiKeyInput = document.getElementById("apiKey");
+        const eyeIcon = document.getElementById("eyeIcon");
+
+        if (apiKeyInput.type === "password") {
+          apiKeyInput.type = "text";
+          eyeIcon.innerHTML = `
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
                 `;
-            } else {
-                apiKeyInput.type = 'password';
-                eyeIcon.innerHTML = `
+        } else {
+          apiKeyInput.type = "password";
+          eyeIcon.innerHTML = `
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                 `;
-            }
         }
-        
-        function useSamplePrompt() {
-            document.getElementById('promptInput').value = 'Explain the concept of machine learning in simple terms. What are the main types of machine learning and how do they differ from each other?';
-            updateCharCount();
+      }
+
+      function useSamplePrompt() {
+        document.getElementById("promptInput").value =
+          "Explain the concept of machine learning in simple terms. What are the main types of machine learning and how do they differ from each other?";
+        updateCharCount();
+      }
+
+      async function runTest() {
+        const apiKey = document.getElementById("apiKey").value.trim();
+        const model = document.getElementById("modelSelect").value;
+        const prompt = document.getElementById("promptInput").value.trim();
+
+        // Validation
+        if (!apiKey) {
+          showError("Please enter your API key");
+          return;
         }
-        
-        async function runTest() {
-            const apiKey = document.getElementById('apiKey').value.trim();
-            const model = document.getElementById('modelSelect').value;
-            const prompt = document.getElementById('promptInput').value.trim();
-            
-            // Validation
-            if (!apiKey) {
-                showError('Please enter your API key');
-                return;
-            }
-            
-            if (!model) {
-                showError('Please select a model');
-                return;
-            }
-            
-            if (!prompt) {
-                showError('Please enter a prompt');
-                return;
-            }
-            
-            // Save API key
-            localStorage.setItem('apiKey', apiKey);
-            
-            // Show loading state
-            const testBtn = document.getElementById('testBtn');
-            const originalBtnContent = testBtn.innerHTML;
-            testBtn.disabled = true;
-            testBtn.innerHTML = `
+
+        if (!model) {
+          showError("Please select a model");
+          return;
+        }
+
+        if (!prompt) {
+          showError("Please enter a prompt");
+          return;
+        }
+
+        // Save API key
+        localStorage.setItem("apiKey", apiKey);
+
+        // Show loading state
+        const testBtn = document.getElementById("testBtn");
+        const originalBtnContent = testBtn.innerHTML;
+        testBtn.disabled = true;
+        testBtn.innerHTML = `
                 <div class="spinner"></div>
                 <span>Testing...</span>
             `;
-            
-            // Show live stats and reset timeline
-            document.getElementById('liveStats').classList.remove('hidden');
-            document.getElementById('statusValue').textContent = 'Running';
-            document.getElementById('statusValue').className = 'text-2xl font-bold text-yellow-400';
-            
-            // Reset all timeline steps
-            const steps = ['dns', 'tls', 'send', 'process', 'receive'];
-            steps.forEach(step => {
-                const stepEl = document.getElementById(`step-${step}`);
-                stepEl.className = 'process-step pending';
-                document.getElementById(`${step}-time`).textContent = '--';
-            });
-            
-            const startTime = performance.now();
-            const timeline = {};
-            
-            // Simulate DNS Resolution
-            await updateStep('dns', 'active');
-            await sleep(Math.random() * 50 + 20);
-            timeline.dns = Math.round(performance.now() - startTime);
-            document.getElementById('dns-time').textContent = `${timeline.dns}ms`;
-            await updateStep('dns', 'completed');
-            
-            // Simulate TLS Handshake
-            await updateStep('tls', 'active');
-            await sleep(Math.random() * 100 + 50);
-            timeline.tls = Math.round(performance.now() - startTime);
-            document.getElementById('tls-time').textContent = `${timeline.tls - timeline.dns}ms`;
-            await updateStep('tls', 'completed');
-            
-            // Simulate Sending Request
-            await updateStep('send', 'active');
-            await sleep(Math.random() * 30 + 10);
-            timeline.send = Math.round(performance.now() - startTime);
-            document.getElementById('send-time').textContent = `${timeline.send - timeline.tls}ms`;
-            await updateStep('send', 'completed');
-            
-            // Processing
-            await updateStep('process', 'active');
-            
-            try {
-                const requestBody = {
-                    model: model,
-                    messages: [
-                        {
-                            role: 'user',
-                            content: prompt
-                        }
-                    ],
-                    max_tokens: 500,
-                    temperature: 0.7
-                };
 
-                const response = await fetch('https://api.z.ai/api/coding/paas/v4/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiKey}`
-                    },
-                    body: JSON.stringify(requestBody)
-                });
-                
-                timeline.process = Math.round(performance.now() - startTime);
-                document.getElementById('process-time').textContent = `${timeline.process - timeline.send}ms`;
-                await updateStep('process', 'completed');
-                
-                // Receiving Response
-                await updateStep('receive', 'active');
-                
-                const endTime = performance.now();
-                const latency = Math.round(endTime - startTime);
-                
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`);
-                }
-                
-                const data = await response.json();
-                console.log('API Response:', data);
-                
-                // Try multiple possible response structures
-                let responseText = 'No response';
-                if (data.choices && data.choices[0]) {
-                    if (data.choices[0].message) {
-                        // Check for reasoning_content first (thinking mode)
-                        if (data.choices[0].message.reasoning_content) {
-                            responseText = data.choices[0].message.reasoning_content;
-                        } else if (data.choices[0].message.content) {
-                            responseText = data.choices[0].message.content;
-                        }
-                    } else if (data.choices[0].text) {
-                        responseText = data.choices[0].text;
-                    } else if (data.choices[0].delta && data.choices[0].delta.content) {
-                        responseText = data.choices[0].delta.content;
+        // Show live stats and reset timeline
+        document.getElementById("liveStats").classList.remove("hidden");
+        document.getElementById("statusValue").textContent = "Running";
+        document.getElementById("statusValue").className = "text-2xl font-bold text-yellow-400";
+
+        // Reset all timeline steps
+        const steps = ["dns", "tls", "send", "process", "receive"];
+        steps.forEach((step) => {
+          const stepEl = document.getElementById(`step-${step}`);
+          stepEl.className = "process-step pending";
+          document.getElementById(`${step}-time`).textContent = "--";
+        });
+
+        const startTime = performance.now();
+        const timeline = {};
+
+        // Simulate DNS Resolution
+        await updateStep("dns", "active");
+        await sleep(Math.random() * 50 + 20);
+        timeline.dns = Math.round(performance.now() - startTime);
+        document.getElementById("dns-time").textContent = `${timeline.dns}ms`;
+        await updateStep("dns", "completed");
+
+        // Simulate TLS Handshake
+        await updateStep("tls", "active");
+        await sleep(Math.random() * 100 + 50);
+        timeline.tls = Math.round(performance.now() - startTime);
+        document.getElementById("tls-time").textContent = `${timeline.tls - timeline.dns}ms`;
+        await updateStep("tls", "completed");
+
+        // Simulate Sending Request
+        await updateStep("send", "active");
+        await sleep(Math.random() * 30 + 10);
+        timeline.send = Math.round(performance.now() - startTime);
+        document.getElementById("send-time").textContent = `${timeline.send - timeline.tls}ms`;
+        await updateStep("send", "completed");
+
+        // Processing
+        await updateStep("process", "active");
+
+        try {
+          let requestBody;
+          let headers;
+          let apiUrl;
+
+          if (currentEndpoint === "anthropic") {
+            // Anthropic API format
+            apiUrl = API_ENDPOINTS.anthropic;
+            const thinkingBudget =
+              parseInt(document.getElementById("thinkingBudget").value) || 10000;
+
+            requestBody = {
+              model: model,
+              max_tokens: thinkingEnabled ? 16000 : 1024,
+              stream: true,
+              messages: [
+                {
+                  role: "user",
+                  content: prompt,
+                },
+              ],
+              thinking: {
+                type: thinkingEnabled ? "enabled" : "disabled",
+                ...(thinkingEnabled && { budget_tokens: thinkingBudget }),
+              },
+            };
+            headers = {
+              "Content-Type": "application/json",
+              "x-api-key": apiKey,
+              "anthropic-version": "2023-06-01",
+            };
+          } else {
+            // OpenAI API format
+            apiUrl = API_ENDPOINTS.openai;
+            const thinkingBudget =
+              parseInt(document.getElementById("thinkingBudget").value) || 10000;
+
+            requestBody = {
+              model: model,
+              messages: [
+                {
+                  role: "user",
+                  content: prompt,
+                },
+              ],
+              max_tokens: thinkingEnabled ? 16000 : 500,
+              temperature: thinkingEnabled ? 1 : 0.7, // Thinking requires temperature=1
+              stream: true,
+            };
+
+            // Add thinking parameter if enabled
+            if (thinkingEnabled) {
+              requestBody.thinking = {
+                type: "enabled",
+                budget_tokens: thinkingBudget,
+              };
+            }
+
+            headers = {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${apiKey}`,
+            };
+          }
+
+          const response = await fetch(apiUrl, {
+            method: "POST",
+            headers: headers,
+            body: JSON.stringify(requestBody),
+          });
+
+          timeline.process = Math.round(performance.now() - startTime);
+          document.getElementById("process-time").textContent = `${
+            timeline.process - timeline.send
+          }ms`;
+          await updateStep("process", "completed");
+
+          // Receiving Response (streaming)
+          await updateStep("receive", "active");
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(
+              errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`
+            );
+          }
+
+          // Auto-expand response section for streaming
+          const responseContainer = document.getElementById("liveResponseContainer");
+          const responseIcon = document.getElementById("responseToggleIcon");
+          if (responseContainer && responseContainer.classList.contains("hidden")) {
+            responseContainer.classList.remove("hidden");
+            responseIcon.classList.add("rotate-180");
+          }
+
+          const liveResponseEl = document.getElementById("liveResponse");
+          liveResponseEl.innerHTML = "";
+
+          // Handle streaming response
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          let responseText = "";
+          let thinkingText = "";
+          let tokenCount = 0;
+          let firstTokenTime = null;
+          let buffer = "";
+          let isThinkingBlock = false;
+
+          while (true) {
+            const { done, value } = await reader.read();
+
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop(); // Keep incomplete line in buffer
+
+            for (const line of lines) {
+              const trimmedLine = line.trim();
+
+              // Skip empty lines and event lines
+              if (!trimmedLine || trimmedLine.startsWith("event:")) continue;
+              if (!trimmedLine.startsWith("data:")) continue;
+
+              const data = trimmedLine.slice(5).trim();
+              if (data === "[DONE]") continue;
+
+              try {
+                const parsed = JSON.parse(data);
+                let content = null;
+
+                if (currentEndpoint === "anthropic") {
+                  // Anthropic SSE format
+                  if (parsed.type === "content_block_start") {
+                    // Check if this is a thinking block
+                    isThinkingBlock = parsed.content_block?.type === "thinking";
+                  } else if (parsed.type === "content_block_delta") {
+                    if (parsed.delta?.thinking) {
+                      // Thinking content
+                      thinkingText += parsed.delta.thinking;
+                      // Show thinking in response area with special styling
+                      liveResponseEl.innerHTML =
+                        `<div class="text-orange-400/70 italic mb-2 pb-2 border-b border-orange-400/20"><span class="text-orange-400 font-medium">💭 Thinking:</span>\n${escapeHtml(
+                          thinkingText
+                        )}</div>` +
+                        (responseText
+                          ? `<div>${escapeHtml(responseText)}</div>`
+                          : '<span class="text-gray-500">Generating response...</span>');
+                      liveResponseEl.scrollTop = liveResponseEl.scrollHeight;
+                    } else if (parsed.delta?.text) {
+                      // Regular content
+                      content = parsed.delta.text;
                     }
-                } else if (data.content) {
-                    responseText = data.content;
-                } else if (data.output) {
-                    responseText = data.output;
-                } else if (typeof data === 'string') {
-                    responseText = data;
+                  } else if (parsed.type === "content_block_stop") {
+                    isThinkingBlock = false;
+                  } else if (parsed.type === "message_delta" && parsed.usage) {
+                    // Final message with usage stats
+                    tokenCount = parsed.usage.output_tokens || tokenCount;
+                    document.getElementById("tokensValue").textContent = tokenCount;
+                  }
+                } else {
+                  // OpenAI SSE format
+                  const delta = parsed.choices?.[0]?.delta;
+
+                  // Handle reasoning/thinking content (GLM models)
+                  if (delta?.reasoning_content) {
+                    thinkingText += delta.reasoning_content;
+                    // Show thinking in response area with special styling
+                    liveResponseEl.innerHTML =
+                      `<div class="text-purple-400/70 italic mb-2 pb-2 border-b border-purple-400/20"><span class="text-purple-400 font-medium">💭 Reasoning:</span>\n${escapeHtml(
+                        thinkingText
+                      )}</div>` +
+                      (responseText
+                        ? `<div>${escapeHtml(responseText)}</div>`
+                        : '<span class="text-gray-500">Generating response...</span>');
+                    liveResponseEl.scrollTop = liveResponseEl.scrollHeight;
+                  }
+
+                  // Handle regular content
+                  if (delta?.content) {
+                    content = delta.content;
+                  }
+
+                  // Check for usage info in final chunk
+                  if (parsed.usage) {
+                    tokenCount = parsed.usage.completion_tokens || tokenCount;
+                    document.getElementById("tokensValue").textContent =
+                      parsed.usage.total_tokens || tokenCount;
+                  }
                 }
-                
-                const tokens = data.usage?.total_tokens || 0;
-                const completionTokens = data.usage?.completion_tokens || 0;
-                // Calculate TPS based on completion tokens (tokens generated by the model)
-                // This gives a more accurate measure of model generation speed
-                const tps = latency > 0 ? (completionTokens / (latency / 1000)).toFixed(2) : 0;
-                
-                console.log('Response text:', responseText);
-                console.log('Tokens:', tokens);
-                console.log('Completion tokens:', completionTokens);
-                console.log('TPS:', tps);
-                
-                timeline.receive = latency;
-                document.getElementById('receive-time').textContent = `${timeline.receive - timeline.process}ms`;
-                await updateStep('receive', 'completed');
-                
-                // Update live stats
-                document.getElementById('latencyValue').textContent = `${latency}ms`;
-                document.getElementById('latencyValue').className = getLatencyClass(latency);
-                document.getElementById('statusValue').textContent = 'Success';
-                document.getElementById('statusValue').className = 'text-2xl font-bold text-green-400';
-                document.getElementById('tokensValue').textContent = tokens;
-                document.getElementById('tpsValue').textContent = tps;
-                
-                const liveResponseEl = document.getElementById('liveResponse');
-                if (liveResponseEl) {
+
+                if (content) {
+                  if (!firstTokenTime) {
+                    firstTokenTime = performance.now();
+                    const ttft = Math.round(firstTokenTime - startTime);
+                    document.getElementById("ttftValue").textContent = `${ttft}ms`;
+                    document.getElementById("statusValue").textContent = "Streaming";
+                    document.getElementById("statusValue").className =
+                      "text-xl font-bold text-cyan-400";
+                    document.getElementById("streamStatus").textContent = "Live";
+                    document.getElementById("streamStatus").className =
+                      "text-xl font-bold text-emerald-400 pulse-animation";
+                  }
+
+                  responseText += content;
+                  tokenCount++;
+
+                  // Update response display
+                  if (thinkingText) {
+                    const thinkingColor = currentEndpoint === "anthropic" ? "orange" : "purple";
+                    const thinkingLabel =
+                      currentEndpoint === "anthropic" ? "Thinking" : "Reasoning";
+                    liveResponseEl.innerHTML = `<div class="text-${thinkingColor}-400/70 italic mb-2 pb-2 border-b border-${thinkingColor}-400/20"><span class="text-${thinkingColor}-400 font-medium">💭 ${thinkingLabel}:</span>\n${escapeHtml(
+                      thinkingText
+                    )}</div><div>${escapeHtml(responseText)}</div>`;
+                  } else {
                     liveResponseEl.innerHTML = escapeHtml(responseText);
-                    console.log('Updated liveResponse element');
-                } else {
-                    console.error('liveResponse element not found!');
+                  }
+                  liveResponseEl.scrollTop = liveResponseEl.scrollHeight;
+
+                  // Update token count in real-time
+                  document.getElementById("tokensValue").textContent = tokenCount;
                 }
-                
-                // Auto-expand response section when test completes
-                const responseContainer = document.getElementById('liveResponseContainer');
-                const responseIcon = document.getElementById('responseToggleIcon');
-                if (responseContainer && responseContainer.classList.contains('hidden')) {
-                    responseContainer.classList.remove('hidden');
-                    responseIcon.classList.add('rotate-180');
-                }
-                
-                // Save to history
-                const testResult = {
-                    id: Date.now(),
-                    timestamp: new Date().toISOString(),
-                    model: model,
-                    prompt: prompt,
-                    response: responseText,
-                    latency: latency,
-                    tokens: tokens,
-                    tps: tps,
-                    status: 'success',
-                    timeline: timeline,
-                    userId: currentUser.id,
-                    userName: currentUser.name
-                };
-                
-                testHistory.unshift(testResult);
-                if (testHistory.length > 50) {
-                    testHistory = testHistory.slice(0, 50);
-                }
-                
-                localStorage.setItem('latencyTests', JSON.stringify(testHistory));
-                renderHistory();
-                
-            } catch (error) {
-                const endTime = performance.now();
-                const latency = Math.round(endTime - startTime);
-                
-                document.getElementById('latencyValue').textContent = `${latency}ms`;
-                document.getElementById('latencyValue').className = 'text-2xl font-bold text-red-400';
-                document.getElementById('statusValue').textContent = 'Failed';
-                document.getElementById('statusValue').className = 'text-2xl font-bold text-red-400';
-                document.getElementById('tokensValue').textContent = '0';
-                
-                showError(error.message);
-                
-                // Save failed test to history
-                const testResult = {
-                    id: Date.now(),
-                    timestamp: new Date().toISOString(),
-                    model: model,
-                    prompt: prompt,
-                    response: '',
-                    latency: latency,
-                    tokens: 0,
-                    status: 'failed',
-                    error: error.message,
-                    userId: currentUser.id,
-                    userName: currentUser.name
-                };
-                
-                testHistory.unshift(testResult);
-                if (testHistory.length > 50) {
-                    testHistory = testHistory.slice(0, 50);
-                }
-                
-                localStorage.setItem('latencyTests', JSON.stringify(testHistory));
-                renderHistory();
+              } catch (e) {
+                // Skip invalid JSON lines
+              }
             }
-            
-            // Reset button
-            testBtn.disabled = false;
-            testBtn.innerHTML = originalBtnContent;
+          }
+
+          const endTime = performance.now();
+          const latency = Math.round(endTime - startTime);
+          const ttft = firstTokenTime ? Math.round(firstTokenTime - startTime) : latency;
+
+          // Calculate TPS based on streaming duration (from first token to end)
+          const streamDuration = firstTokenTime
+            ? (endTime - firstTokenTime) / 1000
+            : latency / 1000;
+          const tps = streamDuration > 0 ? (tokenCount / streamDuration).toFixed(2) : 0;
+
+          console.log("Response text:", responseText);
+          console.log("Token count:", tokenCount);
+          console.log("TTFT:", ttft, "ms");
+          console.log("TPS:", tps);
+
+          timeline.receive = latency;
+          document.getElementById("receive-time").textContent = `${
+            timeline.receive - timeline.process
+          }ms`;
+          await updateStep("receive", "completed");
+
+          // Update live stats
+          document.getElementById("latencyValue").textContent = `${latency}ms`;
+          document.getElementById("latencyValue").className = getLatencyClass(latency);
+          document.getElementById("ttftValue").textContent = `${ttft}ms`;
+          document.getElementById("statusValue").textContent = "Success";
+          document.getElementById("statusValue").className = "text-xl font-bold text-green-400";
+          document.getElementById("tpsValue").textContent = tps;
+          document.getElementById("streamStatus").textContent = "Done";
+          document.getElementById("streamStatus").className = "text-xl font-bold text-emerald-400";
+
+          // Save to history
+          const testResult = {
+            id: Date.now(),
+            timestamp: new Date().toISOString(),
+            model: model,
+            prompt: prompt,
+            response: responseText,
+            thinking: thinkingText || null,
+            thinkingEnabled: thinkingEnabled,
+            latency: latency,
+            ttft: ttft,
+            tokens: tokenCount,
+            tps: tps,
+            status: "success",
+            timeline: timeline,
+            endpoint: currentEndpoint,
+            userId: currentUser.id,
+            userName: currentUser.name,
+          };
+
+          testHistory.unshift(testResult);
+          if (testHistory.length > 50) {
+            testHistory = testHistory.slice(0, 50);
+          }
+
+          localStorage.setItem("latencyTests", JSON.stringify(testHistory));
+          renderHistory();
+        } catch (error) {
+          const endTime = performance.now();
+          const latency = Math.round(endTime - startTime);
+
+          document.getElementById("latencyValue").textContent = `${latency}ms`;
+          document.getElementById("latencyValue").className = "text-xl font-bold text-red-400";
+          document.getElementById("ttftValue").textContent = "--";
+          document.getElementById("statusValue").textContent = "Failed";
+          document.getElementById("statusValue").className = "text-xl font-bold text-red-400";
+          document.getElementById("tokensValue").textContent = "0";
+          document.getElementById("tpsValue").textContent = "--";
+          document.getElementById("streamStatus").textContent = "Error";
+          document.getElementById("streamStatus").className = "text-xl font-bold text-red-400";
+
+          showError(error.message);
+
+          // Save failed test to history
+          const testResult = {
+            id: Date.now(),
+            timestamp: new Date().toISOString(),
+            model: model,
+            prompt: prompt,
+            response: "",
+            latency: latency,
+            tokens: 0,
+            status: "failed",
+            error: error.message,
+            endpoint: currentEndpoint,
+            userId: currentUser.id,
+            userName: currentUser.name,
+          };
+
+          testHistory.unshift(testResult);
+          if (testHistory.length > 50) {
+            testHistory = testHistory.slice(0, 50);
+          }
+
+          localStorage.setItem("latencyTests", JSON.stringify(testHistory));
+          renderHistory();
         }
-        
-        function sleep(ms) {
-            return new Promise(resolve => setTimeout(resolve, ms));
+
+        // Reset button
+        testBtn.disabled = false;
+        testBtn.innerHTML = originalBtnContent;
+      }
+
+      function sleep(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+      }
+
+      async function updateStep(step, status) {
+        const stepEl = document.getElementById(`step-${step}`);
+        stepEl.className = `process-step ${status}`;
+      }
+
+      function toggleResponse() {
+        const container = document.getElementById("liveResponseContainer");
+        const icon = document.getElementById("responseToggleIcon");
+
+        container.classList.toggle("hidden");
+        icon.classList.toggle("rotate-180");
+      }
+
+      function getLatencyClass(latency) {
+        if (latency < 1000) return "text-2xl font-bold text-green-400";
+        if (latency < 3000) return "text-2xl font-bold text-yellow-400";
+        return "text-2xl font-bold text-red-400";
+      }
+
+      function getLatencyBadgeClass(latency) {
+        if (latency < 1000) return "latency-badge";
+        if (latency < 3000) return "latency-badge warning";
+        return "latency-badge danger";
+      }
+
+      function renderHistory(filterUserId = "all") {
+        const container = document.getElementById("historyContainer");
+        const emptyHistory = document.getElementById("emptyHistory");
+        const historyCount = document.getElementById("historyCount");
+
+        // Filter history by user if specified
+        let filteredHistory = testHistory;
+        if (filterUserId !== "all") {
+          filteredHistory = testHistory.filter((test) => test.userId === filterUserId);
         }
-        
-        async function updateStep(step, status) {
-            const stepEl = document.getElementById(`step-${step}`);
-            stepEl.className = `process-step ${status}`;
-        }
-        
-        function toggleResponse() {
-            const container = document.getElementById('liveResponseContainer');
-            const icon = document.getElementById('responseToggleIcon');
-            
-            container.classList.toggle('hidden');
-            icon.classList.toggle('rotate-180');
-        }
-        
-        function getLatencyClass(latency) {
-            if (latency < 1000) return 'text-2xl font-bold text-green-400';
-            if (latency < 3000) return 'text-2xl font-bold text-yellow-400';
-            return 'text-2xl font-bold text-red-400';
-        }
-        
-        function getLatencyBadgeClass(latency) {
-            if (latency < 1000) return 'latency-badge';
-            if (latency < 3000) return 'latency-badge warning';
-            return 'latency-badge danger';
-        }
-        
-        function renderHistory(filterUserId = 'all') {
-            const container = document.getElementById('historyContainer');
-            const emptyHistory = document.getElementById('emptyHistory');
-            const historyCount = document.getElementById('historyCount');
-            
-            // Filter history by user if specified
-            let filteredHistory = testHistory;
-            if (filterUserId !== 'all') {
-                filteredHistory = testHistory.filter(test => test.userId === filterUserId);
-            }
-            
-            historyCount.textContent = `${filteredHistory.length} test${filteredHistory.length !== 1 ? 's' : ''}`;
-            
-            if (filteredHistory.length === 0) {
-                if (emptyHistory) {
-                    emptyHistory.classList.remove('hidden');
-                } else {
-                    container.innerHTML = `
+
+        historyCount.textContent = `${filteredHistory.length} test${
+          filteredHistory.length !== 1 ? "s" : ""
+        }`;
+
+        if (filteredHistory.length === 0) {
+          if (emptyHistory) {
+            emptyHistory.classList.remove("hidden");
+          } else {
+            container.innerHTML = `
                         <div id="emptyHistory" class="text-center py-12">
                             <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-800/50 flex items-center justify-center">
                                 <svg class="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1118,11 +1678,13 @@
                             <p class="text-gray-600 text-sm mt-1">Run your first test to see results here</p>
                         </div>
                     `;
-                }
-                return;
-            }
-            
-            const historyHTML = filteredHistory.map((test, index) => `
+          }
+          return;
+        }
+
+        const historyHTML = filteredHistory
+          .map(
+            (test, index) => `
                 <div 
                     class="history-item glass-card rounded-xl p-4 cursor-pointer transition-all duration-300 fade-in"
                     style="animation-delay: ${index * 0.05}s;"
@@ -1130,25 +1692,44 @@
                 >
                     <div class="flex items-start justify-between mb-3">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-lg ${test.status === 'success' ? 'bg-gradient-to-br from-green-500 to-emerald-500' : 'bg-gradient-to-br from-red-500 to-rose-500'} flex items-center justify-center">
-                                ${test.status === 'success' 
+                            <div class="w-10 h-10 rounded-lg ${
+                              test.status === "success"
+                                ? "bg-gradient-to-br from-green-500 to-emerald-500"
+                                : "bg-gradient-to-br from-red-500 to-rose-500"
+                            } flex items-center justify-center">
+                                ${
+                                  test.status === "success"
                                     ? '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>'
                                     : '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>'
                                 }
                             </div>
                             <div>
                                 <p class="font-semibold text-sm">${test.model}</p>
-                                <p class="text-xs text-gray-400">${formatDate(test.timestamp)}</p>
+                                <p class="text-xs text-gray-400">${formatDate(
+                                  test.timestamp
+                                )} · <span class="${
+              test.endpoint === "anthropic" ? "text-orange-400" : "text-purple-400"
+            }">${test.endpoint === "anthropic" ? "Anthropic" : "OpenAI"}</span>${
+              test.thinking ? ' · <span class="text-amber-400">💭 Thinking</span>' : ""
+            }</p>
                             </div>
                         </div>
-                        <span class="px-3 py-1 rounded-full text-xs font-bold text-white ${getLatencyBadgeClass(test.latency)}">
+                        <span class="px-3 py-1 rounded-full text-xs font-bold text-white ${getLatencyBadgeClass(
+                          test.latency
+                        )}">
                             ${test.latency}ms
                         </span>
                     </div>
                     <p class="text-sm text-gray-300 line-clamp-2">${escapeHtml(test.prompt)}</p>
-                    ${test.status === 'success' && test.response ? `
-                        <p class="text-sm text-gray-400 line-clamp-2 mt-2 italic">${escapeHtml(test.response)}</p>
-                    ` : ''}
+                    ${
+                      test.status === "success" && test.response
+                        ? `
+                        <p class="text-sm text-gray-400 line-clamp-2 mt-2 italic">${escapeHtml(
+                          test.response
+                        )}</p>
+                    `
+                        : ""
+                    }
                     <div class="flex items-center gap-4 mt-3 pt-3 border-t border-white/10">
                         <div class="flex items-center gap-2 text-xs text-gray-400">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1162,59 +1743,97 @@
                             </svg>
                             ${test.latency}ms
                         </div>
-                        ${test.tps ? `
+                        ${
+                          test.tps
+                            ? `
                             <div class="flex items-center gap-2 text-xs text-amber-400">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                                 </svg>
                                 ${test.tps} TPS
                             </div>
-                        ` : ''}
+                        `
+                            : ""
+                        }
                     </div>
                 </div>
-            `).join('');
-            
-            container.innerHTML = historyHTML;
-        }
-        
-        function showDetail(id) {
-            const test = testHistory.find(t => t.id === id);
-            if (!test) return;
-            
-            const modal = document.getElementById('detailModal');
-            const content = document.getElementById('modalContent');
-            
-            content.innerHTML = `
+            `
+          )
+          .join("");
+
+        container.innerHTML = historyHTML;
+      }
+
+      function showDetail(id) {
+        const test = testHistory.find((t) => t.id === id);
+        if (!test) return;
+
+        const modal = document.getElementById("detailModal");
+        const content = document.getElementById("modalContent");
+
+        content.innerHTML = `
                 <div class="grid grid-cols-2 gap-4">
                     <div class="stat-card rounded-xl p-4">
                         <p class="text-xs text-gray-400 mb-1">Model</p>
                         <p class="text-lg font-bold">${test.model}</p>
                     </div>
                     <div class="stat-card rounded-xl p-4">
+                        <p class="text-xs text-gray-400 mb-1">Endpoint</p>
+                        <p class="text-lg font-bold ${
+                          test.endpoint === "anthropic" ? "text-orange-400" : "text-purple-400"
+                        }">${test.endpoint === "anthropic" ? "Anthropic" : "OpenAI"}</p>
+                    </div>
+                    <div class="stat-card rounded-xl p-4">
                         <p class="text-xs text-gray-400 mb-1">Status</p>
-                        <p class="text-lg font-bold ${test.status === 'success' ? 'text-green-400' : 'text-red-400'}">${test.status === 'success' ? 'Success' : 'Failed'}</p>
+                        <p class="text-lg font-bold ${
+                          test.status === "success" ? "text-green-400" : "text-red-400"
+                        }">${test.status === "success" ? "Success" : "Failed"}</p>
                     </div>
                     <div class="stat-card rounded-xl p-4">
                         <p class="text-xs text-gray-400 mb-1">Latency</p>
-                        <p class="text-lg font-bold ${getLatencyClass(test.latency)}">${test.latency}ms</p>
+                        <p class="text-lg font-bold ${getLatencyClass(test.latency)}">${
+          test.latency
+        }ms</p>
                     </div>
                     <div class="stat-card rounded-xl p-4">
                         <p class="text-xs text-gray-400 mb-1">Tokens</p>
                         <p class="text-lg font-bold">${test.tokens}</p>
                     </div>
-                    ${test.tps ? `
+                    ${
+                      test.tps
+                        ? `
                         <div class="stat-card rounded-xl p-4">
                             <p class="text-xs text-gray-400 mb-1">TPS</p>
                             <p class="text-lg font-bold text-amber-400">${test.tps}</p>
                         </div>
-                    ` : ''}
+                    `
+                        : ""
+                    }
+                    ${
+                      test.ttft
+                        ? `
+                        <div class="stat-card rounded-xl p-4">
+                            <p class="text-xs text-gray-400 mb-1">Time to First Token</p>
+                            <p class="text-lg font-bold text-purple-400">${test.ttft}ms</p>
+                        </div>
+                    `
+                        : ""
+                    }
+                    <div class="stat-card rounded-xl p-4">
+                        <p class="text-xs text-gray-400 mb-1">Thinking</p>
+                        <p class="text-lg font-bold ${
+                          test.thinking ? "text-amber-400" : "text-gray-500"
+                        }">${test.thinking ? "💭 Enabled" : "Disabled"}</p>
+                    </div>
                     <div class="stat-card rounded-xl p-4 col-span-2">
                         <p class="text-xs text-gray-400 mb-1">Timestamp</p>
                         <p class="text-lg font-bold">${formatDate(test.timestamp)}</p>
                     </div>
                 </div>
 
-                ${test.timeline ? `
+                ${
+                  test.timeline
+                    ? `
                     <div>
                         <h4 class="font-semibold mb-3 flex items-center gap-2">
                             <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1225,27 +1844,39 @@
                         <div class="space-y-2">
                             <div class="flex justify-between items-center p-3 rounded-lg bg-white/5">
                                 <span class="text-sm text-gray-300">DNS Resolution</span>
-                                <span class="text-sm font-mono text-cyan-400">${test.timeline.dns}ms</span>
+                                <span class="text-sm font-mono text-cyan-400">${
+                                  test.timeline.dns
+                                }ms</span>
                             </div>
                             <div class="flex justify-between items-center p-3 rounded-lg bg-white/5">
                                 <span class="text-sm text-gray-300">TLS Handshake</span>
-                                <span class="text-sm font-mono text-cyan-400">${test.timeline.tls - test.timeline.dns}ms</span>
+                                <span class="text-sm font-mono text-cyan-400">${
+                                  test.timeline.tls - test.timeline.dns
+                                }ms</span>
                             </div>
                             <div class="flex justify-between items-center p-3 rounded-lg bg-white/5">
                                 <span class="text-sm text-gray-300">Sending Request</span>
-                                <span class="text-sm font-mono text-cyan-400">${test.timeline.send - test.timeline.tls}ms</span>
+                                <span class="text-sm font-mono text-cyan-400">${
+                                  test.timeline.send - test.timeline.tls
+                                }ms</span>
                             </div>
                             <div class="flex justify-between items-center p-3 rounded-lg bg-white/5">
                                 <span class="text-sm text-gray-300">Processing</span>
-                                <span class="text-sm font-mono text-cyan-400">${test.timeline.process - test.timeline.send}ms</span>
+                                <span class="text-sm font-mono text-cyan-400">${
+                                  test.timeline.process - test.timeline.send
+                                }ms</span>
                             </div>
                             <div class="flex justify-between items-center p-3 rounded-lg bg-white/5">
                                 <span class="text-sm text-gray-300">Receiving Response</span>
-                                <span class="text-sm font-mono text-cyan-400">${test.timeline.receive - test.timeline.process}ms</span>
+                                <span class="text-sm font-mono text-cyan-400">${
+                                  test.timeline.receive - test.timeline.process
+                                }ms</span>
                             </div>
                         </div>
                     </div>
-                ` : ''}
+                `
+                    : ""
+                }
                 
                 <div>
                     <h4 class="font-semibold mb-3 flex items-center gap-2">
@@ -1254,10 +1885,32 @@
                         </svg>
                         Prompt
                     </h4>
-                    <div class="glass-card rounded-xl p-4 text-sm text-gray-300 whitespace-pre-wrap">${escapeHtml(test.prompt)}</div>
+                    <div class="glass-card rounded-xl p-4 text-sm text-gray-300 whitespace-pre-wrap">${escapeHtml(
+                      test.prompt
+                    )}</div>
                 </div>
                 
-                ${test.status === 'success' ? `
+                ${
+                  test.thinking
+                    ? `
+                    <div>
+                        <h4 class="font-semibold mb-3 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                            </svg>
+                            Thinking Process
+                        </h4>
+                        <div class="glass-card rounded-xl p-4 text-sm text-orange-400/70 italic whitespace-pre-wrap max-h-48 overflow-y-auto scrollbar-thin border border-orange-500/20">${escapeHtml(
+                          test.thinking
+                        )}</div>
+                    </div>
+                `
+                    : ""
+                }
+
+                ${
+                  test.status === "success"
+                    ? `
                     <div>
                         <h4 class="font-semibold mb-3 flex items-center gap-2">
                             <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1265,9 +1918,12 @@
                             </svg>
                             Response
                         </h4>
-                        <div class="glass-card rounded-xl p-4 text-sm text-gray-300 whitespace-pre-wrap max-h-64 overflow-y-auto scrollbar-thin">${escapeHtml(test.response)}</div>
+                        <div class="glass-card rounded-xl p-4 text-sm text-gray-300 whitespace-pre-wrap max-h-64 overflow-y-auto scrollbar-thin">${escapeHtml(
+                          test.response
+                        )}</div>
                     </div>
-                ` : `
+                `
+                    : `
                     <div>
                         <h4 class="font-semibold mb-3 flex items-center gap-2">
                             <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1275,9 +1931,12 @@
                             </svg>
                             Error
                         </h4>
-                        <div class="glass-card rounded-xl p-4 text-sm text-red-400">${escapeHtml(test.error)}</div>
+                        <div class="glass-card rounded-xl p-4 text-sm text-red-400">${escapeHtml(
+                          test.error
+                        )}</div>
                     </div>
-                `}
+                `
+                }
                 
                 <button 
                     onclick="deleteTest(${test.id})" 
@@ -1286,39 +1945,40 @@
                     Delete This Test
                 </button>
             `;
-            
-            modal.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
+
+        modal.classList.remove("hidden");
+        document.body.style.overflow = "hidden";
+      }
+
+      function closeModal() {
+        document.getElementById("detailModal").classList.add("hidden");
+        document.body.style.overflow = "auto";
+      }
+
+      function deleteTest(id) {
+        testHistory = testHistory.filter((t) => t.id !== id);
+        localStorage.setItem("latencyTests", JSON.stringify(testHistory));
+        renderHistory();
+        closeModal();
+      }
+
+      function clearHistory() {
+        if (testHistory.length === 0) return;
+
+        if (confirm("Are you sure you want to clear all test history?")) {
+          testHistory = [];
+          localStorage.setItem("latencyTests", JSON.stringify(testHistory));
+          renderHistory();
+          document.getElementById("liveStats").classList.add("hidden");
         }
-        
-        function closeModal() {
-            document.getElementById('detailModal').classList.add('hidden');
-            document.body.style.overflow = 'auto';
-        }
-        
-        function deleteTest(id) {
-            testHistory = testHistory.filter(t => t.id !== id);
-            localStorage.setItem('latencyTests', JSON.stringify(testHistory));
-            renderHistory();
-            closeModal();
-        }
-        
-        function clearHistory() {
-            if (testHistory.length === 0) return;
-            
-            if (confirm('Are you sure you want to clear all test history?')) {
-                testHistory = [];
-                localStorage.setItem('latencyTests', JSON.stringify(testHistory));
-                renderHistory();
-                document.getElementById('liveStats').classList.add('hidden');
-            }
-        }
-        
-        function showError(message) {
-            // Create toast notification
-            const toast = document.createElement('div');
-            toast.className = 'fixed top-4 right-4 z-50 glass-card rounded-xl p-4 flex items-center gap-3 slide-in max-w-md';
-            toast.innerHTML = `
+      }
+
+      function showError(message) {
+        // Create toast notification
+        const toast = document.createElement("div");
+        toast.className =
+          "fixed top-4 right-4 z-50 glass-card rounded-xl p-4 flex items-center gap-3 slide-in max-w-md";
+        toast.innerHTML = `
                 <div class="w-10 h-10 rounded-lg bg-red-500/20 flex items-center justify-center flex-shrink-0">
                     <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -1326,40 +1986,40 @@
                 </div>
                 <p class="text-sm text-gray-300">${escapeHtml(message)}</p>
             `;
-            
-            document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateX(100%)';
-                toast.style.transition = 'all 0.3s ease';
-                setTimeout(() => toast.remove(), 300);
-            }, 5000);
-        }
-        
-        function formatDate(isoString) {
-            const date = new Date(isoString);
-            return date.toLocaleString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
-            });
-        }
-        
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-        
-        // Close modal on escape key
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                closeModal();
-            }
+
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+          toast.style.opacity = "0";
+          toast.style.transform = "translateX(100%)";
+          toast.style.transition = "all 0.3s ease";
+          setTimeout(() => toast.remove(), 300);
+        }, 5000);
+      }
+
+      function formatDate(isoString) {
+        const date = new Date(isoString);
+        return date.toLocaleString("en-US", {
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
         });
+      }
+
+      function escapeHtml(text) {
+        const div = document.createElement("div");
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      // Close modal on escape key
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          closeModal();
+        }
+      });
     </script>
-</body>
+  </body>
 </html>
