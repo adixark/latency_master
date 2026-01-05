@@ -14,8 +14,7 @@ A stunning, production-ready single-page application for testing the latency and
 - **📊 Live Statistics Dashboard** - View latency, status, response time, tokens, and TPS in real-time
 - **⚡ TPS Calculation** - Tokens Per Second calculated using completion tokens for accurate generation speed
 - **🎬 Animated Process Timeline** - Visual breakdown of DNS resolution, TLS handshake, request sending, processing, and response receiving
-- **🧠 Thinking Mode Support** - Enable chain-of-thought reasoning for GLM models
-- **� User Identity System** - Unique user IDs and random names for multi-user environments
+- **👤 User Identity System** - Unique user IDs and random names for multi-user environments
 - **🔍 History Filtering** - Filter test results by user ID
 - **📝 Test History** - Automatically saves all test results to localStorage (up to 50 tests)
 - **🔎 Detailed Views** - Click on any history item to see full details including prompt, response, and timeline breakdown
@@ -55,7 +54,7 @@ User Input → API Request → Process Timeline → Response Analysis → Histor
   Prompt         Fetch API    DNS/TLS/Send/     Extract Data      localStorage
   API Key        Z.AI Endpoint  Process/Receive   TPS Calculation   (50 max)
   Model          Authorization  Animation         Response Text      User ID
-  Thinking Mode  JSON Body      Real-time UI      Token Count       Filter by User
+  JSON Body      Real-time UI      Token Count       Filter by User
 ```
 
 ### Process Timeline Breakdown
@@ -115,18 +114,13 @@ The application handles multiple response formats from the API:
 
 ```javascript
 // Priority order for response extraction
-1. reasoning_content (when thinking mode is enabled)
-2. message.content (standard response)
-3. choices[0].text (alternative format)
-4. choices[0].delta.content (streaming format)
-5. data.content (direct content field)
-6. data.output (output field)
-7. Raw string response
+1. message.content (standard response)
+2. choices[0].text (alternative format)
+3. choices[0].delta.content (streaming format)
+4. data.content (direct content field)
+5. data.output (output field)
+6. Raw string response
 ```
-
-**Note:** When thinking mode is enabled, GLM API returns:
-- `message.content` = empty string `""`
-- `message.reasoning_content` = actual response text
 
 The application automatically detects and extracts the correct field.
 
@@ -169,7 +163,6 @@ user_1a2b3c4d5e6f7g8h9i0j1k
   tokens: 533,
   tps: "250.00",
   status: "success",
-  thinkingMode: true,
   timeline: {
     dns: 45,
     tls: 150,
@@ -235,27 +228,23 @@ user_1a2b3c4d5e6f7g8h9i0j1k
    - Choose from the dropdown list
    - See concurrency limits for each model
 
-3. **Configure Options**
-   - Enable/disable "Thinking Mode" for chain-of-thought reasoning
-   - Toggle is saved automatically
-
-4. **Enter Prompt**
+3. **Enter Prompt**
    - Type your test prompt
    - Or click "Use Sample Prompt" for a quick test
    - Character counter shows prompt length
 
-5. **Run Test**
+4. **Run Test**
    - Click "Run Latency Test"
    - Watch the animated process timeline
    - View real-time statistics
 
-6. **View Results**
+5. **View Results**
    - See live stats update in real-time
    - Model response appears automatically
    - Check history for past tests
    - Click any history item for detailed view
 
-7. **Filter History**
+6. **Filter History**
    - Use dropdown to filter by user
    - View all users or specific user
    - See test count for current filter
@@ -293,7 +282,6 @@ user_1a2b3c4d5e6f7g8h9i0j1k
 - **Test History**: 50 tests max
 - **API Key**: Persistent
 - **User Identity**: Persistent
-- **Settings**: Thinking mode preference
 
 ## 📊 Metrics Explained
 
