@@ -977,7 +977,6 @@
                 document.getElementById('latencyValue').className = getLatencyClass(latency);
                 document.getElementById('statusValue').textContent = 'Success';
                 document.getElementById('statusValue').className = 'text-2xl font-bold text-green-400';
-                document.getElementById('responseTimeValue').textContent = `${latency}ms`;
                 document.getElementById('tokensValue').textContent = tokens;
                 document.getElementById('tpsValue').textContent = tps;
                 
@@ -1029,7 +1028,6 @@
                 document.getElementById('latencyValue').className = 'text-2xl font-bold text-red-400';
                 document.getElementById('statusValue').textContent = 'Failed';
                 document.getElementById('statusValue').className = 'text-2xl font-bold text-red-400';
-                document.getElementById('responseTimeValue').textContent = `${latency}ms`;
                 document.getElementById('tokensValue').textContent = '0';
                 
                 showError(error.message);
